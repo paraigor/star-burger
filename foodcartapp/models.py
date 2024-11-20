@@ -112,11 +112,6 @@ class Order(models.Model):
     last_name = models.CharField("Фамилия", max_length=200)
     phone_number = PhoneNumberField("Номер телефона", region="RU")
     delivery_address = models.TextField("Адрес доставки", max_length=200)
-    products = models.ManyToManyField(
-        Product,
-        related_name="orders",
-        verbose_name="Состав заказа",
-    )
 
     class Meta:
         verbose_name = "Заказ"
@@ -124,3 +119,26 @@ class Order(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} {self.delivery_address}"
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(
+        Order,
+        related_name="order_items",
+        verbose_name="Заказ",
+        on_delete=models.CASCADE,
+    )
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name="order_items",
+        verbose_name="продукт",
+    )
+    quantity = models.PositiveSmallIntegerField("Количество", default=1)
+
+    class Meta:
+        verbose_name = "продукт"
+        verbose_name_plural = "Состав заказа"
+
+    def __str__(self):
+        return f"Заказ {self.order.id} - {self.product.name} - {self.quantity}"

@@ -5,6 +5,7 @@ from django.utils.html import format_html
 
 from .models import (
     Order,
+    OrderItem,
     Product,
     ProductCategory,
     Restaurant,
@@ -109,12 +110,11 @@ class ProductAdmin(admin.ModelAdmin):
     pass
 
 
-class ProductInline(admin.TabularInline):
-    model = Order.products.through
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
     extra = 0
 
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    exclude = ("products",)
-    inlines = [ProductInline]
+    inlines = [OrderItemInline]
