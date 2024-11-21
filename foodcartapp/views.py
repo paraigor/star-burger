@@ -1,5 +1,4 @@
-import json
-
+import phonenumbers as ph
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
@@ -77,6 +76,35 @@ def register_order(request):
         site_order["products"], list
     ):
         return Response({"error": "products not present or not a list"})
+    for order_product in site_order["products"]:
+        order_product_id = order_product["product"]
+        product = Product.objects.filter(pk=order_product_id)
+        if not product:
+            return Response({"error": "product id not valid"})
+    if not site_order.get("firstname") or not isinstance(
+        site_order["firstname"], str
+    ):
+        return Response({"error": "firstname not present or not a string"})
+    if not site_order.get("lastname") or not isinstance(
+        site_order["lastname"], str
+    ):
+        return Response({"error": "lastname not present or not a string"})
+    if not site_order.get("phonenumber") or not isinstance(
+        site_order["phonenumber"], str
+    ):
+        return Response({"error": "phonenumber not present or not a string"})
+    try:
+        phone_number = ph.parse(site_order.get("phonenumber"), "RU")
+        if not ph.is_valid_number(phone_number):
+            raise
+    except Exception:
+        return Response({"error": "phonenumber not valid"})
+
+    if not site_order.get("address") or not isinstance(
+        site_order["address"], str
+    ):
+        return Response({"error": "address not present or not a string"})
+
     order = Order.objects.create(
         first_name=site_order["firstname"],
         last_name=site_order["lastname"],
