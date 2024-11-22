@@ -1,9 +1,8 @@
-import phonenumbers as ph
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer, ValidationError
+from rest_framework.serializers import ModelSerializer
 
 from .models import Order, OrderItem, Product
 
@@ -77,11 +76,14 @@ class OrderItemSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = OrderItemSerializer(many=True, allow_empty=False)
+    products = OrderItemSerializer(
+        many=True, allow_empty=False, write_only=True
+    )
 
     class Meta:
         model = Order
         fields = [
+            "id",
             "firstname",
             "lastname",
             "phonenumber",
@@ -89,23 +91,26 @@ class OrderSerializer(ModelSerializer):
             "products",
         ]
 
+    def create(self, validated_data):
+        order = Order.objects.create(
+            firstname=validated_data["firstname"],
+            lastname=validated_data["lastname"],
+            phonenumber=validated_data["phonenumber"],
+            address=validated_data["address"],
+        )
+
+        order_products = [
+            OrderItem(order=order, **fields)
+            for fields in validated_data["products"]
+        ]
+        OrderItem.objects.bulk_create(order_products)
+        return order
+
 
 @api_view(["POST"])
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
+    serializer.save()
 
-    order = Order.objects.create(
-        firstname=serializer.validated_data["firstname"],
-        lastname=serializer.validated_data["lastname"],
-        phonenumber=serializer.validated_data["phonenumber"],
-        address=serializer.validated_data["address"],
-    )
-
-    order_products = [
-        OrderItem(order=order, **fields)
-        for fields in serializer.validated_data["products"]
-    ]
-    OrderItem.objects.bulk_create(order_products)
-
-    return Response(request.data)
+    return Response(serializer.data)
