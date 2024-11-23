@@ -112,7 +112,7 @@ class OrderQuerySet(models.QuerySet):
     def fetch_with_total_amounts(self):
         return self.annotate(
             order_amount=Sum(
-                F("order_items__product__price") * F("order_items__quantity")
+                F("order_items__price") * F("order_items__quantity")
             )
         )
 
@@ -136,6 +136,7 @@ class Order(models.Model):
     lastname = models.CharField("Фамилия", max_length=200)
     phonenumber = PhoneNumberField("Номер телефона", region="RU")
     address = models.TextField("Адрес доставки", max_length=200)
+    comment = models.TextField("Комментарий", blank=True)
 
     objects = OrderQuerySet.as_manager()
 

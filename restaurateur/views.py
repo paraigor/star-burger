@@ -124,6 +124,7 @@ def view_orders(request):
                 "client": f"{order.firstname} {order.lastname}",
                 "phonenumber": order.phonenumber,
                 "address": order.address,
+                "comment": order.comment,
             }
         )
     return render(
