@@ -120,6 +120,7 @@ def view_orders(request):
             {
                 "id": order.id,
                 "status": order.get_status_display(),
+                "payment": order.get_payment_display(),
                 "order_amount": order.order_amount,
                 "client": f"{order.firstname} {order.lastname}",
                 "phonenumber": order.phonenumber,

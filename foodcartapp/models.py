@@ -126,6 +126,13 @@ class Order(models.Model):
         ("completed", "Выполнен"),
         ("canceled", "Отменен"),
     ]
+    PAYMENT = [
+        ("cash", "Наличными"),
+        ("card", "Картой онлайн"),
+    ]
+    created_at = models.DateTimeField(
+        "Дата/время заказа", default=timezone.now, db_index=True
+    )
     status = models.CharField(
         "Статус заказа",
         max_length=20,
@@ -133,8 +140,12 @@ class Order(models.Model):
         default="accepted",
         db_index=True,
     )
-    created_at = models.DateTimeField(
-        "Дата/время заказа", default=timezone.now, db_index=True
+    payment = models.CharField(
+        "Способ оплаты",
+        max_length=20,
+        choices=PAYMENT,
+        default="card",
+        db_index=True,
     )
     firstname = models.CharField("Имя", max_length=200)
     lastname = models.CharField("Фамилия", max_length=200)
