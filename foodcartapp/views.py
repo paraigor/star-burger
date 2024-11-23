@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
@@ -91,6 +92,7 @@ class OrderSerializer(ModelSerializer):
             "products",
         ]
 
+    @transaction.atomic
     def create(self, validated_data):
         order = Order.objects.create(
             firstname=validated_data["firstname"],
