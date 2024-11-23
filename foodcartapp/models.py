@@ -147,6 +147,13 @@ class OrderItem(models.Model):
         verbose_name="продукт",
     )
     quantity = models.PositiveSmallIntegerField("Количество")
+    price = models.DecimalField(
+        "цена",
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        default=0.00,
+    )
 
     class Meta:
         verbose_name = "продукт"
@@ -154,6 +161,3 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"Заказ {self.order.id} - {self.product.name} - {self.quantity}"
-
-    def get_amount(self):
-        return self.product.price * self.quantity
