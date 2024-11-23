@@ -118,6 +118,20 @@ class OrderQuerySet(models.QuerySet):
 
 
 class Order(models.Model):
+    STATUSES = [
+        ("accepted", "Принят"),
+        ("prepared", "Готовится"),
+        ("delivering", "В доставке"),
+        ("completed", "Выполнен"),
+        ("canceled", "Отменен"),
+    ]
+    status = models.CharField(
+        "Статус заказа",
+        max_length=20,
+        choices=STATUSES,
+        default="accepted",
+        db_index=True,
+    )
     firstname = models.CharField("Имя", max_length=200)
     lastname = models.CharField("Фамилия", max_length=200)
     phonenumber = PhoneNumberField("Номер телефона", region="RU")
@@ -146,13 +160,14 @@ class OrderItem(models.Model):
         related_name="orders",
         verbose_name="продукт",
     )
-    quantity = models.PositiveSmallIntegerField("Количество")
+    quantity = models.PositiveSmallIntegerField("Количество", db_index=True)
     price = models.DecimalField(
         "цена",
         max_digits=8,
         decimal_places=2,
         validators=[MinValueValidator(0)],
         default=0.00,
+        db_index=True,
     )
 
     class Meta:
