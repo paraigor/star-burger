@@ -111,12 +111,13 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url="restaurateur:login")
 def view_orders(request):
-    orders = Order.objects.all()
+    orders = Order.objects.fetch_with_total_amounts()
     order_items = []
     for order in orders:
         order_items.append(
             {
                 "id": order.id,
+                "order_amount": order.order_amount,
                 "client": f"{order.firstname} {order.lastname}",
                 "phonenumber": order.phonenumber,
                 "address": order.address,
