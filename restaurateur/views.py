@@ -5,10 +5,17 @@ from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views import View
 from geopy import distance
 
-from foodcartapp.models import Order, Product, Restaurant, RestaurantMenuItem
+from foodcartapp.models import (
+    Order,
+    Product,
+    Restaurant,
+    RestaurantMenuItem,
+)
+from location.models import Location
 from star_burger.settings import YAGEO_API_KEY
 
 
@@ -145,11 +152,26 @@ def view_orders(request):
     restaurants_coords = {}
     for restaurant in restaurants:
         try:
-            restaurants_coords[restaurant.name] = fetch_coordinates(
-                YAGEO_API_KEY, restaurant.address
+            location = Location.objects.get(address=restaurant.address)
+            restaurants_coords[restaurant.name] = (
+                location.latitude,
+                location.longitude,
             )
-        except requests.exceptions.HTTPError:
-            continue
+        except Location.DoesNotExist:
+            try:
+                latitude, longitude = fetch_coordinates(
+                    YAGEO_API_KEY, restaurant.address
+                )
+                restaurants_coords[restaurant.name] = (latitude, longitude)
+                Location.objects.update_or_create(
+                    address=restaurant.address,
+                    latitude=latitude,
+                    longitude=longitude,
+                    defaults={"updated_at": timezone.now},
+                )
+            except requests.exceptions.HTTPError:
+                restaurants_coords[restaurant.name] = None
+                continue
 
     orders = (
         Order.objects.exclude(status__in=["completed", "canceled"])
@@ -168,11 +190,22 @@ def view_orders(request):
                 restaurants_count[product_in_restaurant.restaurant] += 1
 
         try:
-            order_address_coords = fetch_coordinates(
-                YAGEO_API_KEY, order.address
-            )
-        except requests.exceptions.HTTPError:
-            order_address_coords = None
+            location = Location.objects.get(address=order.address)
+            order_address_coords = (location.latitude, location.longitude)
+        except Location.DoesNotExist:
+            try:
+                latitude, longitude = fetch_coordinates(
+                    YAGEO_API_KEY, order.address
+                )
+                order_address_coords = (latitude, longitude)
+                Location.objects.update_or_create(
+                    address=order.address,
+                    latitude=latitude,
+                    longitude=longitude,
+                    defaults={"updated_at": timezone.now},
+                )
+            except requests.exceptions.HTTPError:
+                order_address_coords = None
 
         restaurants_available = {
             rest.name: round(
