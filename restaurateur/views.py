@@ -208,13 +208,13 @@ def view_orders(request):
                 order_address_coords = None
 
         restaurants_available = {
-            rest.name: round(
+            restaurant.name: round(
                 distance.distance(
-                    order_address_coords, restaurants_coords[rest.name]
+                    order_address_coords, restaurants_coords[restaurant.name]
                 ).km,
                 3,
             )
-            for rest, count in restaurants_count.items()
+            for restaurant, count in restaurants_count.items()
             if count == len(order_products)
         }
         restaurants_available_sorted = dict(

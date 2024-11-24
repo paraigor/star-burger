@@ -141,8 +141,3 @@ class OrderAdmin(admin.ModelAdmin):
             return response
         if url_has_allowed_host_and_scheme(request.GET["next"], None):
             return redirect(request.GET["next"])
-
-
-@admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
-    pass
