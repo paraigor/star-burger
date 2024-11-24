@@ -130,10 +130,15 @@ class OrderAdmin(admin.ModelAdmin):
             instance.price = instance.product.price
             instance.save()
 
+    def save_model(self, request, obj, form, change):
+        if "restaurant" in form.changed_data:
+            obj.status = "prepared"
+        super().save_model(request, obj, form, change)
+
     def response_change(self, request, obj):
-        res = super().response_change(request, obj)
+        response = super().response_change(request, obj)
         if "next" not in request.GET:
-            return res
+            return response
         if url_has_allowed_host_and_scheme(request.GET["next"], None):
             return redirect(request.GET["next"])
 

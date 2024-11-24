@@ -6,7 +6,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import View
 
-from foodcartapp.models import Order, Product, Restaurant
+from foodcartapp.models import Order, Product, Restaurant, RestaurantMenuItem
 
 
 class Login(forms.Form):
@@ -111,11 +111,31 @@ def view_restaurants(request):
 
 @user_passes_test(is_manager, login_url="restaurateur:login")
 def view_orders(request):
-    orders = Order.objects.exclude(
-        status__in=["completed", "canceled"]
-    ).fetch_with_total_amounts().order_by("-id")
+    products_in_restaurants = RestaurantMenuItem.objects.filter(
+        availability=True
+    ).prefetch_related("product")
+    restaurants = Restaurant.objects.all()
+    orders = (
+        Order.objects.exclude(status__in=["completed", "canceled"])
+        .fetch_with_total_amounts()
+        .order_by("status")
+        .prefetch_related("order_items")
+    )
     order_items = []
     for order in orders:
+        order_products = [item.product for item in order.order_items.all()]
+        restaurants_count = {restaurant: 0 for restaurant in restaurants}
+
+        for product_in_restaurant in products_in_restaurants:
+            if product_in_restaurant.product in order_products:
+                restaurants_count[product_in_restaurant.restaurant] += 1
+
+        restaurants_available = [
+            rest.name
+            for rest, count in restaurants_count.items()
+            if count == len(order_products)
+        ]
+
         order_items.append(
             {
                 "id": order.id,
@@ -126,8 +146,13 @@ def view_orders(request):
                 "phonenumber": order.phonenumber,
                 "address": order.address,
                 "comment": order.comment,
+                "restaurants": restaurants_available,
+                "order_restaurant": order.restaurant.name
+                if order.restaurant
+                else None,
             }
         )
+
     return render(
         request,
         template_name="order_items.html",

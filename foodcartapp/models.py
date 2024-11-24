@@ -144,8 +144,17 @@ class Order(models.Model):
         "Способ оплаты",
         max_length=20,
         choices=PAYMENT,
-        default="card",
+        null=True,
+        blank=True,
         db_index=True,
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        related_name="orders",
+        verbose_name="ресторан",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
     )
     firstname = models.CharField("Имя", max_length=200)
     lastname = models.CharField("Фамилия", max_length=200)
