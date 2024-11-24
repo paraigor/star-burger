@@ -1,3 +1,4 @@
+import requests
 from django import forms
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
@@ -5,8 +6,33 @@ from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views import View
+from geopy import distance
 
 from foodcartapp.models import Order, Product, Restaurant, RestaurantMenuItem
+from star_burger.settings import YAGEO_API_KEY
+
+
+def fetch_coordinates(apikey, address):
+    base_url = "https://geocode-maps.yandex.ru/1.x"
+    response = requests.get(
+        base_url,
+        params={
+            "geocode": address,
+            "apikey": apikey,
+            "format": "json",
+        },
+    )
+    response.raise_for_status()
+    found_places = response.json()["response"]["GeoObjectCollection"][
+        "featureMember"
+    ]
+
+    if not found_places:
+        return None
+
+    most_relevant = found_places[0]
+    lon, lat = most_relevant["GeoObject"]["Point"]["pos"].split(" ")
+    return lat, lon
 
 
 class Login(forms.Form):
@@ -114,13 +140,24 @@ def view_orders(request):
     products_in_restaurants = RestaurantMenuItem.objects.filter(
         availability=True
     ).prefetch_related("product")
+
     restaurants = Restaurant.objects.all()
+    restaurants_coords = {}
+    for restaurant in restaurants:
+        try:
+            restaurants_coords[restaurant.name] = fetch_coordinates(
+                YAGEO_API_KEY, restaurant.address
+            )
+        except requests.exceptions.HTTPError:
+            continue
+
     orders = (
         Order.objects.exclude(status__in=["completed", "canceled"])
         .fetch_with_total_amounts()
         .order_by("status")
         .prefetch_related("order_items")
     )
+
     order_items = []
     for order in orders:
         order_products = [item.product for item in order.order_items.all()]
@@ -130,11 +167,26 @@ def view_orders(request):
             if product_in_restaurant.product in order_products:
                 restaurants_count[product_in_restaurant.restaurant] += 1
 
-        restaurants_available = [
-            rest.name
+        try:
+            order_address_coords = fetch_coordinates(
+                YAGEO_API_KEY, order.address
+            )
+        except requests.exceptions.HTTPError:
+            order_address_coords = None
+
+        restaurants_available = {
+            rest.name: round(
+                distance.distance(
+                    order_address_coords, restaurants_coords[rest.name]
+                ).km,
+                3,
+            )
             for rest, count in restaurants_count.items()
             if count == len(order_products)
-        ]
+        }
+        restaurants_available_sorted = dict(
+            sorted(restaurants_available.items(), key=lambda item: item[1])
+        )
 
         order_items.append(
             {
@@ -146,7 +198,7 @@ def view_orders(request):
                 "phonenumber": order.phonenumber,
                 "address": order.address,
                 "comment": order.comment,
-                "restaurants": restaurants_available,
+                "restaurants": restaurants_available_sorted,
                 "order_restaurant": order.restaurant.name
                 if order.restaurant
                 else None,
