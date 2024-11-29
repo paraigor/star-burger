@@ -1,5 +1,11 @@
+import requests
 from django.db import transaction
+from django.utils import timezone
 from rest_framework.serializers import ModelSerializer
+
+from location.models import Location
+from restaurateur.tools import fetch_coordinates
+from star_burger.settings import YAGEO_API_KEY
 
 from .models import Order, OrderItem
 
@@ -28,12 +34,33 @@ class OrderSerializer(ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        address = validated_data["address"]
         order = Order.objects.create(
             firstname=validated_data["firstname"],
             lastname=validated_data["lastname"],
             phonenumber=validated_data["phonenumber"],
-            address=validated_data["address"],
+            address=address,
         )
+
+        try:
+            Location.objects.get(address=address)
+        except Location.DoesNotExist:
+            try:
+                latitude, longitude = fetch_coordinates(
+                    YAGEO_API_KEY, address
+                )
+
+                Location.objects.update_or_create(
+                    address=address,
+                    latitude=latitude,
+                    longitude=longitude,
+                    defaults={"updated_at": timezone.now},
+                )
+            except requests.exceptions.HTTPError:
+                Location.objects.create(
+                    address=address,
+                    defaults={"updated_at": timezone.now},
+                )
 
         order_items = []
         for order_item in validated_data["products"]:

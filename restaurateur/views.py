@@ -18,28 +18,7 @@ from foodcartapp.models import (
 from location.models import Location
 from star_burger.settings import YAGEO_API_KEY
 
-
-def fetch_coordinates(apikey, address):
-    base_url = "https://geocode-maps.yandex.ru/1.x"
-    response = requests.get(
-        base_url,
-        params={
-            "geocode": address,
-            "apikey": apikey,
-            "format": "json",
-        },
-    )
-    response.raise_for_status()
-    found_places = response.json()["response"]["GeoObjectCollection"][
-        "featureMember"
-    ]
-
-    if not found_places:
-        return None
-
-    most_relevant = found_places[0]
-    lon, lat = most_relevant["GeoObject"]["Point"]["pos"].split(" ")
-    return lat, lon
+from .tools import fetch_coordinates
 
 
 class Login(forms.Form):
@@ -189,23 +168,8 @@ def view_orders(request):
             if product_in_restaurant.product in order_products:
                 restaurants_count[product_in_restaurant.restaurant] += 1
 
-        try:
-            location = Location.objects.get(address=order.address)
-            order_address_coords = (location.latitude, location.longitude)
-        except Location.DoesNotExist:
-            try:
-                latitude, longitude = fetch_coordinates(
-                    YAGEO_API_KEY, order.address
-                )
-                order_address_coords = (latitude, longitude)
-                Location.objects.update_or_create(
-                    address=order.address,
-                    latitude=latitude,
-                    longitude=longitude,
-                    defaults={"updated_at": timezone.now},
-                )
-            except requests.exceptions.HTTPError:
-                order_address_coords = None
+        location = Location.objects.get(address=order.address)
+        order_address_coords = (location.latitude, location.longitude)
 
         restaurants_available = {
             restaurant.name: round(

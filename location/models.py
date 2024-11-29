@@ -3,8 +3,8 @@ from django.db import models
 
 class Location(models.Model):
     address = models.TextField("Адрес места", max_length=200)
-    latitude = models.FloatField("Широта")
-    longitude = models.FloatField("Долгота")
+    latitude = models.FloatField("Широта", null=True, blank=True)
+    longitude = models.FloatField("Долгота", null=True, blank=True)
     updated_at = models.DateTimeField(
         "Дата/время обновления", null=True, blank=True, db_index=True
     )
