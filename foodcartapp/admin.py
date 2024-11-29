@@ -122,6 +122,7 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    readonly_fields = ("created_at", )
     inlines = [OrderItemInline]
 
     def save_formset(self, request, form, formset, change):

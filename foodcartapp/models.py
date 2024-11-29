@@ -131,7 +131,7 @@ class Order(models.Model):
         ("card", "Картой онлайн"),
     ]
     created_at = models.DateTimeField(
-        "Дата/время заказа", default=timezone.now, db_index=True
+        "Дата/время заказа", auto_now_add=True, db_index=True
     )
     status = models.CharField(
         "Статус заказа",
