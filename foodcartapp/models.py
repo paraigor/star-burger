@@ -144,7 +144,6 @@ class Order(models.Model):
         "Способ оплаты",
         max_length=20,
         choices=PAYMENT,
-        null=True,
         blank=True,
         db_index=True,
     )
