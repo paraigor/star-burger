@@ -1,8 +1,15 @@
+import requests
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import F, Sum
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+
+from location.models import Location
+from restaurateur.tools import fetch_coordinates
+from star_burger.settings import YAGEO_API_KEY
 
 
 class Restaurant(models.Model):
@@ -24,6 +31,30 @@ class Restaurant(models.Model):
 
     def __str__(self):
         return self.name
+
+
+@receiver(post_save, sender=Restaurant)
+def fetch_restaurant_coords(sender, instance, created, **kwargs):
+    try:
+        address = instance.address
+        Location.objects.get(address=address)
+    except Location.DoesNotExist:
+        try:
+            latitude, longitude = fetch_coordinates(
+                YAGEO_API_KEY, address
+            )
+
+            Location.objects.update_or_create(
+                address=address,
+                latitude=latitude,
+                longitude=longitude,
+                defaults={"updated_at": timezone.now},
+            )
+        except requests.exceptions.HTTPError:
+            Location.objects.create(
+                address=address,
+                defaults={"updated_at": timezone.now},
+            )
 
 
 class ProductQuerySet(models.QuerySet):

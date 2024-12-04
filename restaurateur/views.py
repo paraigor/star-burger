@@ -130,27 +130,11 @@ def view_orders(request):
     restaurants = Restaurant.objects.all()
     restaurants_coords = {}
     for restaurant in restaurants:
-        try:
-            location = Location.objects.get(address=restaurant.address)
-            restaurants_coords[restaurant.name] = (
-                location.latitude,
-                location.longitude,
-            )
-        except Location.DoesNotExist:
-            try:
-                latitude, longitude = fetch_coordinates(
-                    YAGEO_API_KEY, restaurant.address
-                )
-                restaurants_coords[restaurant.name] = (latitude, longitude)
-                Location.objects.update_or_create(
-                    address=restaurant.address,
-                    latitude=latitude,
-                    longitude=longitude,
-                    defaults={"updated_at": timezone.now},
-                )
-            except requests.exceptions.HTTPError:
-                restaurants_coords[restaurant.name] = None
-                continue
+        location = Location.objects.get(address=restaurant.address)
+        restaurants_coords[restaurant.name] = (
+            location.latitude,
+            location.longitude,
+        )
 
     orders = (
         Order.objects.exclude(status__in=["completed", "canceled"])
