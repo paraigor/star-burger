@@ -16,6 +16,7 @@ SECRET_KEY = env('DJANGO_SECRET_KEY')
 YAGEO_API_KEY = env('YAGEO_API_KEY')
 DEBUG = env.bool('DEBUG', False)
 ROLLBAR_TOKEN = env('ROLLBAR_POST_SERVER_TOKEN')
+ROLLBAR_ENVIRONMENT = env('ROLLBAR_ENVIRONMENT')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1', 'localhost'])
 
@@ -130,7 +131,7 @@ STATICFILES_DIRS = [
 
 ROLLBAR = {
     'access_token': ROLLBAR_TOKEN,
-    'environment': 'development' if DEBUG else 'production',
+    'environment': ROLLBAR_ENVIRONMENT,
     'code_version': '1.0',
     'root': BASE_DIR,
 }
