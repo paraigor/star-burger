@@ -57,10 +57,13 @@ pip install -r requirements.txt
 Определите переменные окружения. Создать файл `.env` в каталоге `star_burger/` и положите туда такой код:
 ```sh
 # Секретный ключ для конкретной установки Django. Используется для обеспечения криптографической подписи, и его значение должно быть уникальным и непредсказуемым. Рекомендуется использовать не менее 50 символов.
-DJANGO_SECRET_KEY = django-insecure-0if40nf4nf93n4
+DJANGO_SECRET_KEY = "django-insecure-0if40nf4nf93n4"
+
+# Строка подключения к базе данных
+DATABASE_URL = postgres://user:password@host/database
 
 # Ключ Яндекс JavaScript API и HTTP Геокодера для получения координат по адресу
-YAGEO_API_KEY = x0x0x0x00-x00x0x000-x00x0x0xx-x0xxx00x
+YAGEO_API_KEY = "x0x0x0x00-x00x0x000-x00x0x0xx-x0xxx00x"
 
 # Токен системы мониторинга Rollbar
 ROLLBAR_POST_SERVER_TOKEN = "d57b18ad651f4a069fd9a4371b8e4c4a"
