@@ -168,6 +168,38 @@ Parcel будет следить за файлами в каталоге `bundle
 - `YAGEO_API_KEY` - Ключ Яндекс JavaScript API и HTTP Геокодера для получения координат по адресу.
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
 
+Для автоматизированного обновления прод-версии, можно использовать следующий bash-скрипт.  
+Создайте файл `deploy_star_burger.sh` в удобном месте со следующим содержанием:
+```sh
+#!/bin/bash
+
+set -Eeuo pipefail
+
+cd /opt/star-burger # Переход в директорию проекта
+git pull
+
+venv/bin/pip install -r requirements.txt
+
+npm ci --dev
+./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+
+venv/bin/python manage.py migrate
+venv/bin/python manage.py collectstatic
+
+systemctl stop star-burger
+systemctl start star-burger
+
+echo -e "\nStar-burger site updated successfully\n"
+```
+Сделайте файл исполняемым:
+```sh
+$ chmod +x deploy_star_burger.sh
+```
+И запустите:
+```sh
+$ ./deploy_star_burger.sh
+```
+
 ## Цели проекта
 
 Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).
