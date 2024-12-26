@@ -162,11 +162,28 @@ Parcel будет следить за файлами в каталоге `bundle
 ```
 
 Настроить бэкенд: создать файл `.env` в каталоге `star_burger/` со следующими настройками:
+```sh
+# Секретный ключ для конкретной установки Django. Используется для обеспечения криптографической подписи, и его значение должно быть уникальным и непредсказуемым. Рекомендуется использовать не менее 50 символов.
+DJANGO_SECRET_KEY = "django-insecure-0if40nf4nf93n4"
 
-- `DEBUG` — дебаг-режим. Поставьте `False`.
-- `DJANGO_SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
-- `YAGEO_API_KEY` - Ключ Яндекс JavaScript API и HTTP Геокодера для получения координат по адресу.
-- `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/3.1/ref/settings/#allowed-hosts)
+# Строка подключения к базе данных
+DATABASE_URL = postgres://user:password@host/database
+
+# Ключ Яндекс JavaScript API и HTTP Геокодера для получения координат по адресу
+YAGEO_API_KEY = "x0x0x0x00-x00x0x000-x00x0x0xx-x0xxx00x"
+
+# Токен системы мониторинга Rollbar
+ROLLBAR_POST_SERVER_TOKEN = "d57b18ad651f4a069fd9a4371b8e4c4a"
+
+# Профиль настроек Rollbar экземпляра проекта
+ROLLBAR_ENVIRONMENT = "development"
+
+# Логическое значение, которое включает/выключает режим отладки. Если в вашем приложении возникает исключение, когда значение DEBUG равно True, Django отобразит подробную обратную трассировку, включая множество метаданных о вашей среде. Для рабочей среды настоятельно рекомендуется использовать значение False.
+DEBUG = True
+
+# Список строк, представляющих имена хостов/доменов, которые может обслуживать этот сайт на Django. Это мера безопасности для предотвращения атак на заголовки HTTP-узлов.
+ALLOWED_HOSTS = .localhost,127.0.0.1,[::1]
+```
 
 Для автоматизированного обновления прод-версии, можно использовать следующий bash-скрипт.  
 Создайте файл `deploy_star_burger.sh` в удобном месте со следующим содержанием:
@@ -184,10 +201,14 @@ npm ci --dev
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 
 venv/bin/python manage.py migrate
-venv/bin/python manage.py collectstatic
+venv/bin/python manage.py collectstatic --clear
 
 systemctl stop star-burger
 systemctl start star-burger
+
+commithash=$(git log -n 1 --pretty=format:"%h")
+commitauthor=$(git log -n 1 --pretty=format:"%an")
+curl -X POST -H "X-Rollbar-Access-Token: {token}" -H "Content-Type: application/json" -d '{"environment": "production", "revision": "'$commithash'", "rollbar_name": "{rollbar_login}", "local_username": "'$commitauthor'",  "status": "succeeded"}' https://api.rollbar.com/api/1/deploy
 
 echo -e "\nStar-burger site updated successfully\n"
 ```
