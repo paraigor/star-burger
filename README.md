@@ -201,7 +201,7 @@ npm ci --dev
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 
 venv/bin/python manage.py migrate
-venv/bin/python manage.py collectstatic --clear
+venv/bin/python manage.py collectstatic --clear --noinput
 
 systemctl stop star-burger
 systemctl start star-burger
@@ -220,6 +220,7 @@ $ chmod +x deploy_star_burger.sh
 ```sh
 $ ./deploy_star_burger.sh
 ```
+### [Перейти на демо-сайт](https://burger.image-press.net)
 
 ## Цели проекта
 
