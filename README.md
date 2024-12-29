@@ -65,10 +65,10 @@ DATABASE_URL = postgres://user:password@host/database
 # Ключ Яндекс JavaScript API и HTTP Геокодера для получения координат по адресу
 YAGEO_API_KEY = "x0x0x0x00-x00x0x000-x00x0x0xx-x0xxx00x"
 
-# Токен системы мониторинга Rollbar
+# Токен системы мониторинга Rollbar. По-умолчанию "rollbar_token"
 ROLLBAR_POST_SERVER_TOKEN = "d57b18ad651f4a069fd9a4371b8e4c4a"
 
-# Профиль настроек Rollbar экземпляра проекта
+# Профиль настроек Rollbar экземпляра проекта. По-умолчанию "production"
 ROLLBAR_ENVIRONMENT = "development"
 
 # Логическое значение, которое включает/выключает режим отладки. Если в вашем приложении возникает исключение, когда значение DEBUG равно True, Django отобразит подробную обратную трассировку, включая множество метаданных о вашей среде. Для рабочей среды настоятельно рекомендуется использовать значение False.
@@ -172,10 +172,10 @@ DATABASE_URL = postgres://user:password@host/database
 # Ключ Яндекс JavaScript API и HTTP Геокодера для получения координат по адресу
 YAGEO_API_KEY = "x0x0x0x00-x00x0x000-x00x0x0xx-x0xxx00x"
 
-# Токен системы мониторинга Rollbar
+# Токен системы мониторинга Rollbar. По-умолчанию "rollbar_token"
 ROLLBAR_POST_SERVER_TOKEN = "d57b18ad651f4a069fd9a4371b8e4c4a"
 
-# Профиль настроек Rollbar экземпляра проекта
+# Профиль настроек Rollbar экземпляра проекта. По-умолчанию "production"
 ROLLBAR_ENVIRONMENT = "development"
 
 # Логическое значение, которое включает/выключает режим отладки. Если в вашем приложении возникает исключение, когда значение DEBUG равно True, Django отобразит подробную обратную трассировку, включая множество метаданных о вашей среде. Для рабочей среды настоятельно рекомендуется использовать значение False.
@@ -208,7 +208,7 @@ systemctl start star-burger
 
 commithash=$(git log -n 1 --pretty=format:"%h")
 commitauthor=$(git log -n 1 --pretty=format:"%an")
-curl -X POST -H "X-Rollbar-Access-Token: {token}" -H "Content-Type: application/json" -d '{"environment": "production", "revision": "'$commithash'", "rollbar_name": "{rollbar_login}", "local_username": "'$commitauthor'",  "status": "succeeded"}' https://api.rollbar.com/api/1/deploy
+curl -X POST -H "X-Rollbar-Access-Token: {rollbar_token}" -H "Content-Type: application/json" -d '{"environment": "production", "revision": "'$commithash'", "rollbar_name": "{rollbar_login}", "local_username": "'$commitauthor'",  "status": "succeeded"}' https://api.rollbar.com/api/1/deploy
 
 echo -e "\nStar-burger site updated successfully\n"
 ```
