@@ -173,7 +173,7 @@ DATABASE_URL = postgres://user:password@host/database
 YAGEO_API_KEY = "x0x0x0x00-x00x0x000-x00x0x0xx-x0xxx00x"
 
 # Токен системы мониторинга Rollbar. По-умолчанию "rollbar_token"
-ROLLBAR_POST_SERVER_TOKEN = "d57b18ad651f4a069fd9a4371b8e4c4a"
+ROLLBAR_POST_SERVER_TOKEN = "xXxXXXxxxxxXxxxxxxxXXX"
 
 # Профиль настроек Rollbar экземпляра проекта. По-умолчанию "production"
 ROLLBAR_ENVIRONMENT = "development"
@@ -205,10 +205,12 @@ venv/bin/python manage.py collectstatic --clear --noinput
 
 systemctl stop star-burger
 systemctl start star-burger
+systemctl reload nginx
 
 commithash=$(git log -n 1 --pretty=format:"%h")
 commitauthor=$(git log -n 1 --pretty=format:"%an")
-curl -X POST -H "X-Rollbar-Access-Token: {rollbar_token}" -H "Content-Type: application/json" -d '{"environment": "production", "revision": "'$commithash'", "rollbar_name": "{rollbar_login}", "local_username": "'$commitauthor'",  "status": "succeeded"}' https://api.rollbar.com/api/1/deploy
+rollbar_token=$(cat .env | grep 'ROLLBAR_POST_SERVER_TOKEN' | awk '{printf $3}' | tr -d \')
+curl -X POST -H "X-Rollbar-Access-Token: $rollbar_token" -H "Content-Type: application/json" -d '{"environment": "production", "revision": "'$commithash'", "rollbar_name": "{rollbar_login}", "local_username": "'$commitauthor'",  "status": "succeeded"}' https://api.rollbar.com/api/1/deploy
 
 echo -e "\nStar-burger site updated successfully\n"
 ```
