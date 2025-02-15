@@ -1,0 +1,33 @@
+services:
+  frontend:
+    image: node:16.16-slim
+    command: sh -c "npm ci && ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url='./'"
+    working_dir: /frontend
+    volumes:
+      - ./frontend:/frontend
+
+  db-server:
+    image: postgres:16.7-alpine3.21
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: db_name
+    ports:
+      - "5432:5432"
+    volumes:
+      - /var/lib/postgresql/data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      {}
+    working_dir: /backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/backend
+    command: sh -c "python3 manage.py migrate && python3 manage.py collectstatic --clear --noinput && gunicorn -w 3 -t 1800 -b 127.0.0.1:8000 star_burger.wsgi:application"
+    depends_on:
+      - db-server

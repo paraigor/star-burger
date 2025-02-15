@@ -3,6 +3,7 @@ frontend/bundles/**
 node_modules/
 media/
 staticfiles/**
+!staticfiles/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
