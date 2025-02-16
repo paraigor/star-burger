@@ -155,36 +155,48 @@ Parcel будет следить за файлами в каталоге `bundle
 
 ## Как запустить prod-версию сайта
 
-Собрать фронтенд:
+Prod-версия сайта запускается в контейнерах с помощью docker-compose.  
+На сервере должны быть установлены `docker-compose` и `nginx`. В данной сборке используется `postgre` докер, но можно использовать и штатно установленный PostgreSQL сервер.
 
-```sh
-./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
-```
-
-Настроить бэкенд: создать файл `.env` в каталоге `star_burger/` со следующими настройками:
+Перед запуском проекта необходимо заполнить файлы переменных среды:  
+`.env`:
 ```sh
 # Секретный ключ для конкретной установки Django. Используется для обеспечения криптографической подписи, и его значение должно быть уникальным и непредсказуемым. Рекомендуется использовать не менее 50 символов.
-DJANGO_SECRET_KEY = "django-insecure-0if40nf4nf93n4"
+DJANGO_SECRET_KEY=xxxXxxxXxxxxxXxxxxxXxxxxXxxxXxxxXxx
 
-# Строка подключения к базе данных
-DATABASE_URL = postgres://user:password@host/database
+# Строка подключения к серверу баз данных
+DATABASE_URL=postgres://user:password@host:port/database
 
 # Ключ Яндекс JavaScript API и HTTP Геокодера для получения координат по адресу
-YAGEO_API_KEY = "x0x0x0x00-x00x0x000-x00x0x0xx-x0xxx00x"
+YAGEO_API_KEY=x0x0x0x00-x00x0x000-x00x0x0xx-x0xxx00x
 
 # Токен системы мониторинга Rollbar. По-умолчанию "rollbar_token"
-ROLLBAR_POST_SERVER_TOKEN = "xXxXXXxxxxxXxxxxxxxXXX"
+ROLLBAR_POST_SERVER_TOKEN=xXxXXXxxxxxXxxxxxxxXXX
 
 # Профиль настроек Rollbar экземпляра проекта. По-умолчанию "production"
-ROLLBAR_ENVIRONMENT = "development"
+ROLLBAR_ENVIRONMENT=production
 
 # Логическое значение, которое включает/выключает режим отладки. Если в вашем приложении возникает исключение, когда значение DEBUG равно True, Django отобразит подробную обратную трассировку, включая множество метаданных о вашей среде. Для рабочей среды настоятельно рекомендуется использовать значение False.
-DEBUG = True
+DEBUG=False
 
 # Список строк, представляющих имена хостов/доменов, которые может обслуживать этот сайт на Django. Это мера безопасности для предотвращения атак на заголовки HTTP-узлов.
-ALLOWED_HOSTS = .localhost,127.0.0.1,[::1]
+ALLOWED_HOSTS=.localhost,127.0.0.1,[::1]
 ```
-
+`.env_db` (Файл можно не создавать, если используется внешний сервер баз данных):
+```sh
+# Пользователь, пароль и название базы данных, которые докер Postgre создаст при старте
+POSTGRES_USER=user
+POSTGRES_PASSWORD=pass
+POSTGRES_DB=db_name
+```
+Для запуска проекта выполните следующие шаги:
+```sh
+$ cd /opt/star-burger
+$ docker-compose build # собираем образ django
+$ docker-compose run frontend # собираем образ node + parcel и создаем бандлы
+$ docker-compose run db-server # собираем образ postgre и создаем базу
+$ docker-compose up -d # запуск всей сборки
+```
 Для автоматизированного обновления прод-версии, можно использовать следующий bash-скрипт.  
 Создайте файл `deploy_star_burger.sh` в удобном месте со следующим содержанием:
 ```sh
@@ -192,19 +204,14 @@ ALLOWED_HOSTS = .localhost,127.0.0.1,[::1]
 
 set -Eeuo pipefail
 
-cd /opt/star-burger # Переход в директорию проекта
+cd /opt/star-burger
 git pull
 
-venv/bin/pip install -r requirements.txt
-
-npm ci --dev
-./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
-
-venv/bin/python manage.py migrate
-venv/bin/python manage.py collectstatic --clear --noinput
-
-systemctl stop star-burger
-systemctl start star-burger
+docker-compose down
+docker-compose build
+docker-compose run frontend
+docker-compose run db-server
+docker-compose up -d
 systemctl reload nginx
 
 commithash=$(git log -n 1 --pretty=format:"%h")

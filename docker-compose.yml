@@ -16,8 +16,7 @@ services:
       - db_volume:/var/lib/postgresql/data
 
   backend:
-    build:
-      context: ./
+    build: ./
     working_dir: /backend
     ports:
       - "8000:8000"
