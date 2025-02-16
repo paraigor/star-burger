@@ -194,7 +194,6 @@ POSTGRES_DB=db_name
 $ cd /opt/star-burger
 $ docker-compose build # собираем образ django
 $ docker-compose run frontend # собираем образ node + parcel и создаем бандлы
-$ docker-compose run db-server # собираем образ postgre и создаем базу
 $ docker-compose up -d # запуск всей сборки
 ```
 Для автоматизированного обновления прод-версии, можно использовать следующий bash-скрипт.  
@@ -210,13 +209,12 @@ git pull
 docker-compose down
 docker-compose build
 docker-compose run frontend
-docker-compose run db-server
 docker-compose up -d
 systemctl reload nginx
 
 commithash=$(git log -n 1 --pretty=format:"%h")
 commitauthor=$(git log -n 1 --pretty=format:"%an")
-rollbar_token=$(cat .env | grep 'ROLLBAR_POST_SERVER_TOKEN' | awk '{printf $3}' | tr -d \')
+rollbar_token=$(source .env; echo $ROLLBAR_POST_SERVER_TOKEN)
 curl -X POST -H "X-Rollbar-Access-Token: $rollbar_token" -H "Content-Type: application/json" -d '{"environment": "production", "revision": "'$commithash'", "rollbar_name": "{rollbar_login}", "local_username": "'$commitauthor'",  "status": "succeeded"}' https://api.rollbar.com/api/1/deploy
 
 echo -e "\nStar-burger site updated successfully\n"
