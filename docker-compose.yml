@@ -21,7 +21,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - .:/backend
+      - ./backend:/backend
       - ./frontend/bundles:/backend/bundles
     command: sh -c "python3 manage.py migrate && python3 manage.py collectstatic --clear --noinput && gunicorn -w 3 -b 0.0.0.0:8000 star_burger.wsgi:application"
     env_file:
